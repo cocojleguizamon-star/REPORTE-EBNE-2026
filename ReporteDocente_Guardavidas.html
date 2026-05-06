@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Reporte Semanal · Guardavidas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0f1a;
+  --surface:#111827;
+  --surface2:#1a2235;
+  --border:#1e2d45;
+  --accent:#00c6a2;
+  --accent2:#3b82f6;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+  --text:#f0f4ff;
+  --muted:#6b7fa8;
+  --pill-bg:#162032;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overscroll-behavior:none}
+body{display:flex;flex-direction:column;min-height:100vh}
+
+/* ── PROGRESS BAR ── */
+.progress-track{position:fixed;top:0;left:0;right:0;height:3px;background:var(--border);z-index:100}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s cubic-bezier(.4,0,.2,1)}
+
+/* ── STEP HEADER ── */
+.step-header{padding:56px 24px 20px;text-align:center}
+.step-badge{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.step-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.step-title{font-size:26px;font-weight:600;line-height:1.2;letter-spacing:-.02em}
+.step-sub{color:var(--muted);font-size:14px;margin-top:8px;line-height:1.5}
+
+/* ── CONTENT ── */
+.step-content{flex:1;padding:0 20px;padding-bottom:120px}
+
+/* ── OPTION GRID (selector pills) ── */
+.option-grid{display:grid;gap:10px}
+.option-grid.cols2{grid-template-columns:1fr 1fr}
+.opt-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px 14px;text-align:left;cursor:pointer;transition:all .2s;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px}
+.opt-btn:active{transform:scale(.97)}
+.opt-btn.selected{background:var(--pill-bg);border-color:var(--accent);color:var(--accent)}
+.opt-btn .opt-icon{font-size:20px;flex-shrink:0}
+.opt-btn .opt-label{line-height:1.3}
+.opt-btn .opt-sub{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
+
+/* ── SEARCH ── */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px 14px 44px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+.search-wrap input:focus{border-color:var(--accent2)}
+.search-wrap input::placeholder{color:var(--muted)}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px}
+.search-results{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;display:none}
+.search-result-item{padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px;display:flex;align-items:center;justify-content:space-between;transition:background .15s}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:active{background:var(--surface2)}
+.search-result-item .div-tag{font-size:10px;font-family:'DM Mono',monospace;background:var(--pill-bg);color:var(--accent);padding:2px 8px;border-radius:20px}
+
+/* ── SELECTED STUDENTS ── */
+.selected-students{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.student-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px}
+.student-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.student-name{font-size:14px;font-weight:500}
+.student-div{font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);background:var(--pill-bg);padding:2px 8px;border-radius:20px}
+.student-obs{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;resize:none;outline:none;min-height:56px}
+.student-obs::placeholder{color:var(--muted)}
+.student-alert-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.alert-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer}
+.alert-toggle input{accent-color:var(--danger);width:14px;height:14px}
+.remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px;margin-left:auto}
+
+/* ── TEXTAREA ── */
+.field-label{font-size:12px;font-family:'DM Mono',monospace;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:block}
+.big-textarea{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;resize:none;outline:none;min-height:130px;transition:border-color .2s;line-height:1.6}
+.big-textarea:focus{border-color:var(--accent2)}
+.big-textarea::placeholder{color:var(--muted)}
+
+/* ── STARS ── */
+.stars-row{display:flex;gap:8px;margin-bottom:16px}
+.star-btn{font-size:32px;cursor:pointer;opacity:.25;transition:opacity .15s,transform .15s;background:none;border:none;padding:0;line-height:1}
+.star-btn.lit{opacity:1}
+.star-btn:active{transform:scale(1.3)}
+
+/* ── MES / SEMANA PICKERS ── */
+.picker-grid{display:grid;gap:8px}
+.picker-grid.cols3{grid-template-columns:repeat(3,1fr)}
+.picker-grid.cols4{grid-template-columns:repeat(4,1fr)}
+.pick-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);font-family:'DM Sans',sans-serif;transition:all .18s}
+.pick-btn:active{transform:scale(.95)}
+.pick-btn.selected{background:var(--pill-bg);border-color:var(--accent);color:var(--accent)}
+
+/* ── BOTTOM NAV ── */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:16px 20px 28px;background:linear-gradient(to top,var(--bg) 70%,transparent);display:flex;gap:10px}
+.btn-main{flex:1;background:var(--accent);color:#000;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;letter-spacing:-.01em}
+.btn-main:active{transform:scale(.97);opacity:.9}
+.btn-main:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.btn-back{background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:14px;padding:16px 20px;font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s}
+.btn-back:active{transform:scale(.97)}
+
+/* ── SUMMARY ── */
+.summary-card{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:20px;margin-bottom:12px}
+.summary-section{margin-bottom:16px}
+.summary-section:last-child{margin-bottom:0}
+.summary-key{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.summary-val{font-size:14px;color:var(--text);line-height:1.5}
+.summary-stars{font-size:18px}
+.alert-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:#3d1515;color:var(--danger);border-radius:20px;padding:3px 10px;margin-top:4px}
+
+/* ── SUCCESS ── */
+.success-screen{text-align:center;padding:80px 24px}
+.success-icon{font-size:64px;margin-bottom:20px}
+.success-title{font-size:28px;font-weight:600;margin-bottom:8px}
+.success-sub{color:var(--muted);font-size:15px;line-height:1.6}
+.new-btn{margin-top:32px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:14px;padding:14px 32px;font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* ── STEP INDICATOR ── */
+.step-dots{display:flex;justify-content:center;gap:6px;margin-bottom:24px}
+.step-dot{width:6px;height:6px;border-radius:3px;background:var(--border);transition:all .3s}
+.step-dot.active{width:20px;background:var(--accent)}
+.step-dot.done{background:var(--accent);opacity:.4}
+
+.divider{height:1px;background:var(--border);margin:20px 0}
+</style>
+</head>
+<body>
+
+<div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:14%"></div></div>
+
+<div id="app"></div>
+
+<script>
+const DOCENTES = [
+  {id:"DOC-01",nombre:"Belén Trillo",modulo:"Natación",sede:"APV"},
+  {id:"DOC-02",nombre:"Agustina Santana",modulo:"Natación",sede:"APV"},
+  {id:"DOC-03",nombre:"Hernán Heil",modulo:"Natación",sede:"APV"},
+  {id:"DOC-04",nombre:"Celeste Kutrumba",modulo:"Natación",sede:"APV"},
+  {id:"DOC-05",nombre:"Martín Aguirre",modulo:"Problemática del ahogamiento",sede:"APV"},
+  {id:"DOC-06",nombre:"Florencia Moyano",modulo:"Introducción a primeros auxilios",sede:"APV"},
+  {id:"DOC-07",nombre:"Leandro Belmudez",modulo:"Anatomía y Fisiología",sede:"APV"},
+  {id:"DOC-08",nombre:"Eugenio Liuzzo",modulo:"Preparación Física",sede:"APV"},
+  {id:"DOC-09",nombre:"Matías Stockle",modulo:"Técnicas de Rescate",sede:"APV"},
+  {id:"DOC-10",nombre:"Camila Peralta",modulo:"Técnicas de Rescate",sede:"APV"},
+  {id:"DOC-11",nombre:"Lucas Tilleria",modulo:"Anatomía / Ed. Sanitaria",sede:"APV"},
+  {id:"DOC-12",nombre:"Julián Grandez",modulo:"Preparación Física",sede:"APV"},
+  {id:"DOC-13",nombre:"Martín López Díaz",modulo:"Técnicas y estrategias de salvamento",sede:"APV"},
+  {id:"DOC-14",nombre:"Florencia Tizocco",modulo:"Aspectos Psicosociales",sede:"APV"},
+  {id:"DOC-15",nombre:"Víctor Bufonne",modulo:"Problemática ahogamiento / RCP",sede:"APV"},
+  {id:"DOC-16",nombre:"Lucila Vallejoz",modulo:"Aspectos Psicosociales",sede:"APV"},
+  {id:"DOC-17",nombre:"Mónica Mazzeo",modulo:"Marco Ético Legal",sede:"APV"},
+  {id:"DOC-18",nombre:"Lucila Delfino Amigo",modulo:"RCP",sede:"APV"},
+  {id:"DOC-19",nombre:"Matías Leonetti",modulo:"Entornos Acuáticos",sede:"APV"},
+  {id:"DOC-20",nombre:"Norberto Díaz",modulo:"Entornos Acuáticos",sede:"APV"},
+  {id:"DOC-21",nombre:"Lourdes Morales",modulo:"Educación Sanitaria",sede:"APV"},
+  {id:"DOC-22",nombre:"Jonathan Bonfigli",modulo:"Natación",sede:"Las Heras"},
+  {id:"DOC-23",nombre:"Pablo Crespo",modulo:"Técnicas de Rescate",sede:"Las Heras"},
+  {id:"DOC-24",nombre:"Lara Vázquez",modulo:"Anatomía y Fisiología",sede:"Las Heras"},
+  {id:"DOC-25",nombre:"Pablo Calloni",modulo:"Preparación Física",sede:"Las Heras"},
+  {id:"DOC-26",nombre:"Yamil Tayeldin",modulo:"Preparación Física",sede:"Las Heras"},
+  {id:"DOC-27",nombre:"Matías Stockle",modulo:"Técnicas de Rescate / RCP",sede:"Las Heras"},
+  {id:"DOC-28",nombre:"Arturo Boccadoro",modulo:"Marco Ético Legal",sede:"Las Heras"},
+  {id:"DOC-29",nombre:"Miguel Bastida",modulo:"Educación Sanitaria",sede:"Las Heras"},
+  {id:"DOC-30",nombre:"Nilda Rojas",modulo:"RCP / Primeros Auxilios",sede:"Las Heras"},
+];
+
+const ALUMNOS = [
+  {id:"ALU-001",nombre:"Álvarez, Tiziano",div:"DIV A"},
+  {id:"ALU-002",nombre:"Cagnone, Lucas",div:"DIV A"},
+  {id:"ALU-003",nombre:"Cardozo, Luciano",div:"DIV A"},
+  {id:"ALU-004",nombre:"Demicheli, Gianluca",div:"DIV A"},
+  {id:"ALU-005",nombre:"Fabiano, Juan María",div:"DIV A"},
+  {id:"ALU-006",nombre:"Farías Guzzardi, Gael",div:"DIV A"},
+  {id:"ALU-007",nombre:"Folgueira Serrao, Jerónimo",div:"DIV A"},
+  {id:"ALU-008",nombre:"Gonseski, Lucas",div:"DIV A"},
+  {id:"ALU-009",nombre:"Laprovitera, Aylen Luz",div:"DIV A"},
+  {id:"ALU-010",nombre:"Manente, Gabriel Angelo",div:"DIV A"},
+  {id:"ALU-011",nombre:"Meta, Rocco",div:"DIV A"},
+  {id:"ALU-012",nombre:"Pereira Torres, Axel Damián",div:"DIV A"},
+  {id:"ALU-013",nombre:"Pieruzzini Pla, Tiago",div:"DIV A"},
+  {id:"ALU-014",nombre:"Ponce, Matheo",div:"DIV A"},
+  {id:"ALU-015",nombre:"Resati, Santiago",div:"DIV A"},
+  {id:"ALU-016",nombre:"Rodríguez, Carla",div:"DIV A"},
+  {id:"ALU-017",nombre:"Suárez, Ezequiel Alejandro",div:"DIV A"},
+  {id:"ALU-018",nombre:"Villagra, Nicolás",div:"DIV A"},
+  {id:"ALU-019",nombre:"Elizarán, Maitena",div:"DIV A"},
+  {id:"ALU-020",nombre:"Gesualdo, Gastón",div:"DIV A"},
+  {id:"ALU-021",nombre:"Aguilar, Uma",div:"DIV A"},
+  {id:"ALU-022",nombre:"López, Sergio",div:"DIV A"},
+  {id:"ALU-023",nombre:"Malzoni, Fabricio",div:"DIV A"},
+  {id:"ALU-024",nombre:"Caraballo, Camila",div:"DIV A"},
+  {id:"ALU-025",nombre:"Irigaray, Juan",div:"DIV A"},
+  {id:"ALU-026",nombre:"Allende Latorre, Alfredo",div:"DIV B"},
+  {id:"ALU-027",nombre:"Biancuzzo, Valentín",div:"DIV B"},
+  {id:"ALU-028",nombre:"Blanco, Fidel",div:"DIV B"},
+  {id:"ALU-029",nombre:"Delfino, Luciana",div:"DIV B"},
+  {id:"ALU-030",nombre:"Figurski, Nehuel",div:"DIV B"},
+  {id:"ALU-031",nombre:"Gómez, Belén Giovanna",div:"DIV B"},
+  {id:"ALU-032",nombre:"González, Julián Gaspar",div:"DIV B"},
+  {id:"ALU-033",nombre:"Mamani Telao, Lucas Daniel",div:"DIV B"},
+  {id:"ALU-034",nombre:"Moyano, Naomi Magali",div:"DIV B"},
+  {id:"ALU-035",nombre:"Paszukievicz, Gustavo Iván",div:"DIV B"},
+  {id:"ALU-036",nombre:"Randazzo, Sofía Belén",div:"DIV B"},
+  {id:"ALU-037",nombre:"Salaberry, Hernán Gustavo",div:"DIV B"},
+  {id:"ALU-038",nombre:"Tagarelli, Leonardo Agustín",div:"DIV B"},
+  {id:"ALU-039",nombre:"Triviño, Sebastián",div:"DIV B"},
+  {id:"ALU-040",nombre:"Zárate, Thiago Santino",div:"DIV B"},
+  {id:"ALU-041",nombre:"Mariano, Enzo",div:"DIV B"},
+  {id:"ALU-042",nombre:"Montañes, Lucila",div:"DIV B"},
+  {id:"ALU-043",nombre:"Ávila, Carla Luján",div:"NOCHE A"},
+  {id:"ALU-044",nombre:"Barreiro Aguirre, Rodrigo",div:"NOCHE A"},
+  {id:"ALU-045",nombre:"Brizuela, Mayra",div:"NOCHE A"},
+  {id:"ALU-046",nombre:"Bumade, Simón Pedro",div:"NOCHE A"},
+  {id:"ALU-047",nombre:"Bustos, Emiliano Ezequiel",div:"NOCHE A"},
+  {id:"ALU-048",nombre:"Caballero Rebollo, Alan",div:"NOCHE A"},
+  {id:"ALU-049",nombre:"Cabanelas, Camila Belén",div:"NOCHE A"},
+  {id:"ALU-050",nombre:"Campos Barreiro, Ámbar",div:"NOCHE A"},
+  {id:"ALU-051",nombre:"Chorny, Amina",div:"NOCHE A"},
+  {id:"ALU-052",nombre:"Dalle Nogare, Luis Adrián",div:"NOCHE A"},
+  {id:"ALU-053",nombre:"Ferrari, Lucas Ezequiel",div:"NOCHE A"},
+  {id:"ALU-054",nombre:"Ferreira, Andrea Victoria",div:"NOCHE A"},
+  {id:"ALU-055",nombre:"Ferreras Zocchi, Lucas Ignacio",div:"NOCHE A"},
+  {id:"ALU-056",nombre:"Giacobbo Fortonniski, Lucas",div:"NOCHE A"},
+  {id:"ALU-057",nombre:"Giardina, Martín Marcelo",div:"NOCHE A"},
+  {id:"ALU-058",nombre:"Grazziano, Agustina",div:"NOCHE A"},
+  {id:"ALU-059",nombre:"Higuero, Ezequiel",div:"NOCHE A"},
+  {id:"ALU-060",nombre:"Lichtmann, Camilo",div:"NOCHE A"},
+  {id:"ALU-061",nombre:"Llorens, Agustina",div:"NOCHE A"},
+  {id:"ALU-062",nombre:"Locatelli, Lucio",div:"NOCHE A"},
+  {id:"ALU-063",nombre:"Lombardo, María Eluney",div:"NOCHE A"},
+  {id:"ALU-064",nombre:"López, Érica Ester",div:"NOCHE A"},
+  {id:"ALU-065",nombre:"López, Mateo Jeremías",div:"NOCHE A"},
+  {id:"ALU-066",nombre:"Lukasievicz, Andy Leonel",div:"NOCHE A"},
+  {id:"ALU-067",nombre:"Martín Hagberg, Bautista",div:"NOCHE A"},
+  {id:"ALU-068",nombre:"Martínez, Nahuel",div:"NOCHE A"},
+  {id:"ALU-069",nombre:"Oliveri, Gonzalo",div:"NOCHE A"},
+  {id:"ALU-070",nombre:"Rocha Mamani, Gustavo",div:"NOCHE A"},
+  {id:"ALU-071",nombre:"Rodríguez Cosma, Jazmín",div:"NOCHE A"},
+  {id:"ALU-072",nombre:"Rojas, Alexis Nahuel",div:"NOCHE A"},
+  {id:"ALU-073",nombre:"Rosenberg Basteiro, Paula",div:"NOCHE A"},
+  {id:"ALU-074",nombre:"Santillán Durán, Camila",div:"NOCHE A"},
+  {id:"ALU-075",nombre:"Scida, Agustín Nicolás",div:"NOCHE A"},
+  {id:"ALU-076",nombre:"Segovia Reynoso, Diego",div:"NOCHE A"},
+  {id:"ALU-077",nombre:"Silva, Gonzalo Federico",div:"NOCHE A"},
+  {id:"ALU-078",nombre:"Terroba, Lucas",div:"NOCHE A"},
+  {id:"ALU-079",nombre:"Valerico, María Agustina",div:"NOCHE A"},
+  {id:"ALU-080",nombre:"Weimer, Estefanía",div:"NOCHE A"},
+  {id:"ALU-081",nombre:"Zangari, Gastón",div:"NOCHE A"},
+  {id:"ALU-082",nombre:"Trenado, Regina",div:"NOCHE A (R)"},
+  {id:"ALU-083",nombre:"Vázquez Pohju, Rodrigo",div:"NOCHE A (R)"},
+  {id:"ALU-084",nombre:"Teijeira, Francisco",div:"NOCHE A (R)"},
+  {id:"ALU-085",nombre:"García, Mauricio",div:"NOCHE A (R)"},
+  {id:"ALU-086",nombre:"Bustos, Florencia Nieves",div:"MOD B"},
+  {id:"ALU-087",nombre:"Castillo, Matías Germán",div:"MOD B"},
+  {id:"ALU-088",nombre:"César Espinoza, José Rafael",div:"MOD B"},
+  {id:"ALU-089",nombre:"Fernández, Ezequiel Darío",div:"MOD B"},
+  {id:"ALU-090",nombre:"Maggio, Lara Julieta",div:"MOD B"},
+  {id:"ALU-091",nombre:"Molina, Noelia Pamela",div:"MOD B"},
+  {id:"ALU-092",nombre:"Ojeda, Román Ariel",div:"MOD B"},
+  {id:"ALU-093",nombre:"Pérez, Patricio Antonio",div:"MOD B"},
+  {id:"ALU-094",nombre:"Villalba, Pamela Soledad",div:"MOD B"},
+  {id:"ALU-095",nombre:"Zimerliz, Alicia Noemí",div:"MOD B"},
+];
+
+const MESES = ["Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre"];
+const SEMANAS = Array.from({length:16},(_,i)=>`Semana ${i+1}`);
+const STAR_LABELS = ["","Muy bajo","Bajo","Regular","Bueno","Excelente"];
+const TOTAL_STEPS = 7;
+
+let state = {
+  step: 1,
+  docente: null,
+  mes: null,
+  semana: null,
+  dimDocente: {estrellas:0, texto:""},
+  dimAlumnos: [],  // [{alumno, obs, alerta}]
+  dimEnsenanza: {estrellas:0, texto:""},
+};
+
+function setProgress(step){
+  document.getElementById("progress-fill").style.width = ((step/TOTAL_STEPS)*100)+"%";
+}
+
+function scrollTop(){window.scrollTo({top:0,behavior:"smooth"});}
+
+function render(){
+  const app = document.getElementById("app");
+  setProgress(state.step);
+  scrollTop();
+  if(state.step===1) app.innerHTML = renderStep1();
+  else if(state.step===2) app.innerHTML = renderStep2();
+  else if(state.step===3) app.innerHTML = renderStep3();
+  else if(state.step===4) app.innerHTML = renderStep4();
+  else if(state.step===5) app.innerHTML = renderStep5();
+  else if(state.step===6) app.innerHTML = renderStep6();
+  else if(state.step===7) app.innerHTML = renderStep7();
+  bindEvents();
+}
+
+function dots(current){
+  return `<div class="step-dots">${Array.from({length:TOTAL_STEPS},(_,i)=>{
+    const cl = i+1===current?"active":i+1<current?"done":"";
+    return `<div class="step-dot ${cl}"></div>`;
+  }).join("")}</div>`;
+}
+
+// ── STEP 1: Docente ──────────────────────────────────────────────────
+function renderStep1(){
+  const search = "";
+  const list = DOCENTES.map(d=>`
+    <button class="opt-btn ${state.docente?.id===d.id?"selected":""}" data-id="${d.id}" onclick="selectDocente('${d.id}')">
+      <span class="opt-icon">👤</span>
+      <span><span class="opt-label">${d.nombre}</span><br><span class="opt-sub">${d.modulo} · ${d.sede}</span></span>
+    </button>`).join("");
+  return `
+    <div class="step-header">
+      <div class="step-badge"><span class="dot"></span>Paso 1 de ${TOTAL_STEPS}</div>
+      <div class="step-title">¿Quién sos?</div>
+      <div class="step-sub">Tocá tu nombre para continuar</div>
+    </div>
+    ${dots(1)}
+    <div class="step-content">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-doc" placeholder="Buscar por nombre..." oninput="filterDocentes(this.value)" autocomplete="off">
+      </div>
+      <div class="option-grid" id="docentes-list">${list}</div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-main" onclick="nextStep()" ${!state.docente?"disabled":""}>Continuar →</button>
+    </div>`;
+}
+
+function filterDocentes(q){
+  const list = document.getElementById("docentes-list");
+  const filtered = DOCENTES.filter(d=>d.nombre.toLowerCase().includes(q.toLowerCase())||d.modulo.toLowerCase().includes(q.toLowerCase()));
+  list.innerHTML = filtered.map(d=>`
+    <button class="opt-btn ${state.docente?.id===d.id?"selected":""}" onclick="selectDocente('${d.id}')">
+      <span class="opt-icon">👤</span>
+      <span><span class="opt-label">${d.nombre}</span><br><span class="opt-sub">${d.modulo} · ${d.sede}</span></span>
+    </button>`).join("");
+}
+
+function selectDocente(id){
+  state.docente = DOCENTES.find(d=>d.id===id);
+  render();
+}
+
+// ── STEP 2: Mes ──────────────────────────────────────────────────────
+function renderStep2(){
+  const btns = MESES.map(m=>`
+    <button class="pick-btn ${state.mes===m?"selected":""}" onclick="selectMes('${m}')">${m}</button>`).join("");
+  return `
+    <div class="step-header">
+      <div class="step-badge"><span class="dot"></span>Paso 2 de ${TOTAL_STEPS}</div>
+      <div class="step-title">¿Qué mes?</div>
+      <div class="step-sub">Seleccioná el mes del reporte</div>
+    </div>
+    ${dots(2)}
+    <div class="step-content">
+      <div class="picker-grid cols3">${btns}</div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-back" onclick="prevStep()">← Volver</button>
+      <button class="btn-main" onclick="nextStep()" ${!state.mes?"disabled":""}>Continuar →</button>
+    </div>`;
+}
+function selectMes(m){state.mes=m;render();}
+
+// ── STEP 3: Semana ────────────────────────────────────────────────────
+function renderStep3(){
+  const btns = SEMANAS.map(s=>`
+    <button class="pick-btn ${state.semana===s?"selected":""}" onclick="selectSemana('${s}')">${s.replace("Semana ","S")}</button>`).join("");
+  return `
+    <div class="step-header">
+      <div class="step-badge"><span class="dot"></span>Paso 3 de ${TOTAL_STEPS}</div>
+      <div class="step-title">¿Qué semana?</div>
+      <div class="step-sub">${state.mes} · ${state.docente?.nombre}</div>
+    </div>
+    ${dots(3)}
+    <div class="step-content">
+      <div class="picker-grid cols4">${btns}</div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-back" onclick="prevStep()">← Volver</button>
+      <button class="btn-main" onclick="nextStep()" ${!state.semana?"disabled":""}>Continuar →</button>
+    </div>`;
+}
+function selectSemana(s){state.semana=s;render();}
+
+// ── STEP 4: Dimensión Docente ─────────────────────────────────────────
+function renderStep4(){
+  const stars = Array.from({length:5},(_,i)=>`
+    <button class="star-btn ${i<state.dimDocente.estrellas?"lit":""}" onclick="setStars('docente',${i+1})">★</button>`).join("");
+  return `
+    <div class="step-header">
+      <div class="step-badge"><span class="dot"></span>Paso 4 de ${TOTAL_STEPS}</div>
+      <div class="step-title">Dimensión Docente</div>
+      <div class="step-sub">¿Cómo te fue a vos esta semana en tu rol?</div>
+    </div>
+    ${dots(4)}
+    <div class="step-content">
+      <span class="field-label">Tu valoración</span>
+      <div class="stars-row">${stars}</div>
+      ${state.dimDocente.estrellas>0?`<div style="font-size:13px;color:var(--accent);margin-bottom:16px;font-family:'DM Mono',monospace">${STAR_LABELS[state.dimDocente.estrellas]}</div>`:""}
+      <span class="field-label">Contá cómo fue</span>
+      <textarea class="big-textarea" id="txt-docente" placeholder="¿Pudiste cumplir tu planificación? ¿Qué salió bien, qué mejorarías? ¿Cómo te sentiste en clase?">${state.dimDocente.texto}</textarea>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-back" onclick="saveDimDocente();prevStep()">← Volver</button>
+      <button class="btn-main" onclick="saveDimDocente();nextStep()">Continuar →</button>
+    </div>`;
+}
+function setStars(dim, val){
+  if(dim==="docente") state.dimDocente.estrellas=val;
+  if(dim==="ensenanza") state.dimEnsenanza.estrellas=val;
+  render();
+}
+function saveDimDocente(){
+  state.dimDocente.texto = document.getElementById("txt-docente")?.value||state.dimDocente.texto;
+}
+
+// ── STEP 5: Dimensión Alumnos ─────────────────────────────────────────
+function renderStep5(){
+  const selectedIds = state.dimAlumnos.map(a=>a.alumno.id);
+  const cards = state.dimAlumnos.map((item,idx)=>`
+    <div class="student-card" id="card-${idx}">
+      <div class="student-card-header">
+        <span class="student-name">${item.alumno.nombre}</span>
+        <span class="student-div">${item.alumno.div}</span>
+      </div>
+      <textarea class="student-obs" id="obs-${idx}" placeholder="¿Qué querés destacar de este estudiante esta semana?">${item.obs}</textarea>
+      <div class="student-alert-row">
+        <label class="alert-toggle">
+          <input type="checkbox" id="alerta-${idx}" ${item.alerta?"checked":""} onchange="toggleAlerta(${idx},this.checked)"> 
+          🔴 Marcar en alerta
+        </label>
+        <button class="remove-btn" onclick="removeAlumno(${idx})">✕</button>
+      </div>
+    </div>`).join("");
+
+  return `
+    <div class="step-header">
+      <div class="step-badge"><span class="dot"></span>Paso 5 de ${TOTAL_STEPS}</div>
+      <div class="step-title">Dimensión Estudiantes</div>
+      <div class="step-sub">Buscá estudiantes para destacar o alertar</div>
+    </div>
+    ${dots(5)}
+    <div class="step-content">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-alu" placeholder="Buscar estudiante por apellido..." oninput="filterAlumnos(this.value)" autocomplete="off">
+      </div>
+      <div id="alu-results" class="search-results"></div>
+      ${cards.length>0?`<div class="selected-students" id="student-cards">${cards}</div>`:`<div style="text-align:center;color:var(--muted);padding:32px 0;font-size:14px">Sin estudiantes seleccionados aún.<br>Podés continuar sin seleccionar ninguno.</div>`}
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-back" onclick="saveAlumnos();prevStep()">← Volver</button>
+      <button class="btn-main" onclick="saveAlumnos();nextStep()">Continuar →</button>
+    </div>`;
+}
+
+function filterAlumnos(q){
+  const res = document.getElementById("alu-results");
+  if(!q||q.length<2){res.style.display="none";return;}
+  const selectedIds = state.dimAlumnos.map(a=>a.alumno.id);
+  const matches = ALUMNOS.filter(a=>a.nombre.toLowerCase().includes(q.toLowerCase())&&!selectedIds.includes(a.id)).slice(0,6);
+  if(!matches.length){res.style.display="none";return;}
+  res.style.display="block";
+  res.innerHTML = matches.map(a=>`
+    <div class="search-result-item" onclick="addAlumno('${a.id}')">
+      <span>${a.nombre}</span>
+      <span class="div-tag">${a.div}</span>
+    </div>`).join("");
+}
+
+function addAlumno(id){
+  const a = ALUMNOS.find(x=>x.id===id);
+  if(!a||state.dimAlumnos.find(x=>x.alumno.id===id)) return;
+  saveAlumnos();
+  state.dimAlumnos.push({alumno:a,obs:"",alerta:false});
+  render();
+  setTimeout(()=>{document.getElementById("search-alu")?.focus();},100);
+}
+
+function removeAlumno(idx){
+  saveAlumnos();
+  state.dimAlumnos.splice(idx,1);
+  render();
+}
+
+function toggleAlerta(idx,val){
+  state.dimAlumnos[idx].alerta=val;
+}
+
+function saveAlumnos(){
+  state.dimAlumnos.forEach((item,idx)=>{
+    const t = document.getElementById("obs-"+idx);
+    const a = document.getElementById("alerta-"+idx);
+    if(t) item.obs = t.value;
+    if(a) item.alerta = a.checked;
+  });
+}
+
+// ── STEP 6: Dimensión Enseñanza ───────────────────────────────────────
+function renderStep6(){
+  const stars = Array.from({length:5},(_,i)=>`
+    <button class="star-btn ${i<state.dimEnsenanza.estrellas?"lit":""}" onclick="setStars('ensenanza',${i+1})">★</button>`).join("");
+  return `
+    <div class="step-header">
+      <div class="step-badge"><span class="dot"></span>Paso 6 de ${TOTAL_STEPS}</div>
+      <div class="step-title">Dimensión Enseñanza</div>
+      <div class="step-sub">¿Cómo fue el proceso de enseñanza-aprendizaje?</div>
+    </div>
+    ${dots(6)}
+    <div class="step-content">
+      <span class="field-label">Valoración del proceso</span>
+      <div class="stars-row">${stars}</div>
+      ${state.dimEnsenanza.estrellas>0?`<div style="font-size:13px;color:var(--accent);margin-bottom:16px;font-family:'DM Mono',monospace">${STAR_LABELS[state.dimEnsenanza.estrellas]}</div>`:""}
+      <span class="field-label">¿En qué se trabajó esta semana?</span>
+      <textarea class="big-textarea" id="txt-ensenanza" placeholder="¿Qué contenidos se desarrollaron? ¿Cómo respondió el grupo? ¿Qué recursos o dinámicas usaste?">${state.dimEnsenanza.texto}</textarea>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-back" onclick="saveDimEnsenanza();prevStep()">← Volver</button>
+      <button class="btn-main" onclick="saveDimEnsenanza();nextStep()">Continuar →</button>
+    </div>`;
+}
+function saveDimEnsenanza(){
+  state.dimEnsenanza.texto = document.getElementById("txt-ensenanza")?.value||state.dimEnsenanza.texto;
+}
+
+// ── STEP 7: Resumen + Confirmar ───────────────────────────────────────
+function renderStep7(){
+  const alertas = state.dimAlumnos.filter(a=>a.alerta);
+  const starsStr = n => n>0?"★".repeat(n)+"☆".repeat(5-n)+" "+STAR_LABELS[n]:"Sin valorar";
+  return `
+    <div class="step-header">
+      <div class="step-badge"><span class="dot"></span>Paso 7 de ${TOTAL_STEPS}</div>
+      <div class="step-title">Revisá tu reporte</div>
+      <div class="step-sub">Confirmá antes de enviar</div>
+    </div>
+    ${dots(7)}
+    <div class="step-content">
+
+      <div class="summary-card">
+        <div class="summary-section">
+          <div class="summary-key">Docente</div>
+          <div class="summary-val">${state.docente?.nombre} · <span style="color:var(--accent)">${state.docente?.modulo}</span></div>
+        </div>
+        <div class="summary-section">
+          <div class="summary-key">Período</div>
+          <div class="summary-val">${state.mes} · ${state.semana}</div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-section">
+          <div class="summary-key">📋 Dimensión Docente</div>
+          <div class="summary-stars">${starsStr(state.dimDocente.estrellas)}</div>
+          <div class="summary-val" style="margin-top:6px;color:var(--muted)">${state.dimDocente.texto||"Sin observaciones"}</div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-section">
+          <div class="summary-key">👥 Dimensión Estudiantes</div>
+          ${state.dimAlumnos.length===0?`<div class="summary-val" style="color:var(--muted)">Sin estudiantes destacados</div>`:""}
+          ${state.dimAlumnos.map(item=>`
+            <div style="margin-bottom:10px;padding:10px;background:var(--surface2);border-radius:8px">
+              <div style="font-size:13px;font-weight:500">${item.alumno.nombre} <span style="font-size:10px;color:var(--muted)">${item.alumno.div}</span></div>
+              ${item.alerta?`<div class="alert-chip">🔴 En alerta</div>`:""}
+              <div style="font-size:13px;color:var(--muted);margin-top:4px">${item.obs||"Sin observación"}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-section">
+          <div class="summary-key">📚 Dimensión Enseñanza</div>
+          <div class="summary-stars">${starsStr(state.dimEnsenanza.estrellas)}</div>
+          <div class="summary-val" style="margin-top:6px;color:var(--muted)">${state.dimEnsenanza.texto||"Sin observaciones"}</div>
+        </div>
+      </div>
+
+      ${alertas.length>0?`
+      <div style="background:#1a0a0a;border:1.5px solid #4a1a1a;border-radius:14px;padding:16px;margin-bottom:12px">
+        <div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--danger);margin-bottom:8px">⚠ ALERTAS ACTIVAS (${alertas.length})</div>
+        ${alertas.map(a=>`<div style="font-size:14px;color:var(--text);margin-bottom:4px">· ${a.alumno.nombre}</div>`).join("")}
+      </div>`:""}
+
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-back" onclick="prevStep()">← Editar</button>
+      <button class="btn-main" onclick="enviarReporte()" style="background:var(--accent)">✓ Enviar reporte</button>
+    </div>`;
+}
+
+function enviarReporte(){
+  // Aquí iría el POST a Google Sheets / backend
+  const payload = {
+    timestamp: new Date().toISOString(),
+    docente: state.docente,
+    mes: state.mes,
+    semana: state.semana,
+    dimDocente: state.dimDocente,
+    dimAlumnos: state.dimAlumnos,
+    dimEnsenanza: state.dimEnsenanza,
+  };
+  console.log("REPORTE:", JSON.stringify(payload, null, 2));
+  showSuccess();
+}
+
+function showSuccess(){
+  document.getElementById("app").innerHTML = `
+    <div class="success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">¡Reporte enviado!</div>
+      <div class="success-sub">${state.docente?.nombre}<br>${state.mes} · ${state.semana}<br><br>El director recibió tu reporte.</div>
+      <button class="new-btn" onclick="resetForm()">Nuevo reporte</button>
+    </div>`;
+  document.getElementById("progress-fill").style.width="100%";
+}
+
+function resetForm(){
+  state={step:1,docente:null,mes:null,semana:null,dimDocente:{estrellas:0,texto:""},dimAlumnos:[],dimEnsenanza:{estrellas:0,texto:""}};
+  render();
+}
+
+function nextStep(){state.step=Math.min(TOTAL_STEPS,state.step+1);render();}
+function prevStep(){state.step=Math.max(1,state.step-1);render();}
+function bindEvents(){}
+
+render();
+</script>
+</body>
+</html>

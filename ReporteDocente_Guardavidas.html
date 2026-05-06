@@ -597,8 +597,8 @@ function renderStep7(){
     </div>`;
 }
 
-function enviarReporte(){
-  // Aquí iría el POST a Google Sheets / backend
+async function enviarReporte(){
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwydutcfiOVWhhHUmw1Hc4cLp5OWmHtdmgDKUeOd1-DzYt-jzuo1zvOvGpRZ2rvR0oV/exec";
   const payload = {
     timestamp: new Date().toISOString(),
     docente: state.docente,
@@ -608,7 +608,17 @@ function enviarReporte(){
     dimAlumnos: state.dimAlumnos,
     dimEnsenanza: state.dimEnsenanza,
   };
-  console.log("REPORTE:", JSON.stringify(payload, null, 2));
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    const result = await resp.json();
+    if(result.status === "ok") { showSuccess(); }
+    else { alert("Error al enviar. Intentá de nuevo."); }
+  } catch(err) {
+    alert("Error de conexión. Revisá el internet e intentá de nuevo.");
+  }
   showSuccess();
 }
 

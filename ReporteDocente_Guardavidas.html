@@ -357,7 +357,7 @@ const ALUMNOS = [
 ];
 
 const MESES = ["Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre"];
-const SEMANAS = Array.from({length:16},(_,i)=>`Semana ${i+1}`);
+const SEMANAS = ["Semana 1","Semana 2","Semana 3","Semana 4","Semana 5"];
 const STAR_LABELS = ["","Muy bajo","Bajo","Regular","Bueno","Excelente"];
 const TOTAL_STEPS = 7;
 
@@ -367,8 +367,8 @@ let state = {
   mes: null,
   semana: null,
   dimDocente: {estrellas:0, texto:""},
-  dimAlumnos: [],  // [{alumno, obs, alerta}]
-  dimEnsenanza: {estrellas:0, texto:""},
+  dimAlumnos: [],
+  dimEnsenanza: {estrellas:0, texto:"", programa:""},
 };
 
 function setProgress(step){
@@ -531,6 +531,33 @@ function renderStep5(){
         </label>
         <button class="remove-btn" onclick="removeAlumno(${idx})">✕</button>
       </div>
+      <div id="sleeper-${idx}" style="margin-top:10px;padding:10px;background:#0f1e2e;border-radius:8px;border:1px solid #1e3a5f;display:${item.alerta?'block':'none'}">
+        <div style="font-size:11px;font-family:'DM Mono',monospace;color:#f59e0b;margin-bottom:8px;letter-spacing:.08em">⚠ PROYECTO SLEEPERS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <span class="field-label" style="font-size:10px">Tipo de alerta</span>
+            <select id="sleeper-tipo-${idx}" style="font-size:12px;padding:6px 8px" onchange="updateSleeper(${idx})">
+              <option value="">Seleccioná...</option>
+              <option value="Vincular" ${item.sleeperTipo==='Vincular'?'selected':''}>Vincular</option>
+              <option value="Física/Salud" ${item.sleeperTipo==='Física/Salud'?'selected':''}>Física / Salud</option>
+              <option value="Económica" ${item.sleeperTipo==='Económica'?'selected':''}>Económica</option>
+              <option value="Hábitos/Disciplina" ${item.sleeperTipo==='Hábitos/Disciplina'?'selected':''}>Hábitos / Disciplina</option>
+              <option value="Académica" ${item.sleeperTipo==='Académica'?'selected':''}>Académica</option>
+            </select>
+          </div>
+          <div>
+            <span class="field-label" style="font-size:10px">Nivel de riesgo</span>
+            <select id="sleeper-riesgo-${idx}" style="font-size:12px;padding:6px 8px" onchange="updateSleeper(${idx})">
+              <option value="">Seleccioná...</option>
+              <option value="BAJO" ${item.sleeperRiesgo==='BAJO'?'selected':''}>🟡 Bajo</option>
+              <option value="MEDIO" ${item.sleeperRiesgo==='MEDIO'?'selected':''}>🟠 Medio</option>
+              <option value="ALTO" ${item.sleeperRiesgo==='ALTO'?'selected':''}>🔴 Alto</option>
+            </select>
+          </div>
+        </div>
+        <span class="field-label" style="font-size:10px">Problemática (breve descripción)</span>
+        <textarea id="sleeper-prob-${idx}" class="student-obs" placeholder="Describí brevemente la situación del estudiante..." style="min-height:44px;font-size:12px" onchange="updateSleeper(${idx})">${item.sleeperProb||''}</textarea>
+      </div>
     </div>`).join("");
 
   return `
@@ -572,7 +599,7 @@ function addAlumno(id){
   const a = ALUMNOS.find(x=>x.id===id);
   if(!a||state.dimAlumnos.find(x=>x.alumno.id===id)) return;
   saveAlumnos();
-  state.dimAlumnos.push({alumno:a,obs:"",alerta:false});
+  state.dimAlumnos.push({alumno:a,obs:"",alerta:false,sleeperTipo:"",sleeperRiesgo:"",sleeperProb:""});
   render();
   setTimeout(()=>{document.getElementById("search-alu")?.focus();},100);
 }
@@ -585,14 +612,30 @@ function removeAlumno(idx){
 
 function toggleAlerta(idx,val){
   state.dimAlumnos[idx].alerta=val;
+  const s = document.getElementById('sleeper-'+idx);
+  if(s) s.style.display = val ? 'block' : 'none';
+}
+function updateSleeper(idx){
+  const t = document.getElementById('sleeper-tipo-'+idx);
+  const r = document.getElementById('sleeper-riesgo-'+idx);
+  const p = document.getElementById('sleeper-prob-'+idx);
+  if(t) state.dimAlumnos[idx].sleeperTipo = t.value;
+  if(r) state.dimAlumnos[idx].sleeperRiesgo = r.value;
+  if(p) state.dimAlumnos[idx].sleeperProb = p.value;
 }
 
 function saveAlumnos(){
   state.dimAlumnos.forEach((item,idx)=>{
     const t = document.getElementById("obs-"+idx);
     const a = document.getElementById("alerta-"+idx);
+    const st = document.getElementById("sleeper-tipo-"+idx);
+    const sr = document.getElementById("sleeper-riesgo-"+idx);
+    const sp = document.getElementById("sleeper-prob-"+idx);
     if(t) item.obs = t.value;
     if(a) item.alerta = a.checked;
+    if(st) item.sleeperTipo = st.value;
+    if(sr) item.sleeperRiesgo = sr.value;
+    if(sp) item.sleeperProb = sp.value;
   });
 }
 
@@ -611,8 +654,11 @@ function renderStep6(){
       <span class="field-label">Valoración del proceso</span>
       <div class="stars-row">${stars}</div>
       ${state.dimEnsenanza.estrellas>0?`<div style="font-size:13px;color:var(--accent);margin-bottom:16px;font-family:'DM Mono',monospace">${STAR_LABELS[state.dimEnsenanza.estrellas]}</div>`:""}
-      <span class="field-label">¿En qué se trabajó esta semana?</span>
-      <textarea class="big-textarea" id="txt-ensenanza" placeholder="¿Qué contenidos se desarrollaron? ¿Cómo respondió el grupo? ¿Qué recursos o dinámicas usaste?">${state.dimEnsenanza.texto}</textarea>
+      <span class="field-label">Contenido del programa trabajado</span>
+      <textarea class="big-textarea" id="txt-programa" placeholder="¿Qué unidad o tema del programa desarrollaste esta semana?" style="min-height:80px">${state.dimEnsenanza.programa||''}</textarea>
+      <div style="margin-top:12px"></div>
+      <span class="field-label">¿Cómo estuvo el grupo con ese contenido?</span>
+      <textarea class="big-textarea" id="txt-ensenanza" placeholder="¿Cómo respondió el grupo? ¿Qué recursos o dinámicas usaste? ¿Algo específico del contenido que quieras destacar?">${state.dimEnsenanza.texto}</textarea>
     </div>
     <div class="bottom-bar">
       <button class="btn-back" onclick="saveDimEnsenanza();prevStep()">← Volver</button>
@@ -621,6 +667,7 @@ function renderStep6(){
 }
 function saveDimEnsenanza(){
   state.dimEnsenanza.texto = document.getElementById("txt-ensenanza")?.value||state.dimEnsenanza.texto;
+  state.dimEnsenanza.programa = document.getElementById("txt-programa")?.value||state.dimEnsenanza.programa||'';
 }
 
 // ── STEP 7: Resumen + Confirmar ───────────────────────────────────────
@@ -663,6 +710,7 @@ function renderStep7(){
             <div style="margin-bottom:10px;padding:10px;background:var(--surface2);border-radius:8px">
               <div style="font-size:13px;font-weight:500">${item.alumno.nombre} <span style="font-size:10px;color:var(--muted)">${item.alumno.div}</span></div>
               ${item.alerta?`<div class="alert-chip">🔴 En alerta</div>`:""}
+              ${item.alerta&&item.sleeperRiesgo?`<div style="font-size:11px;color:#f59e0b;margin-top:4px">⚠ Sleeper · ${item.sleeperTipo||'—'} · Riesgo ${item.sleeperRiesgo}</div>`:""}
               <div style="font-size:13px;color:var(--muted);margin-top:4px">${item.obs||"Sin observación"}</div>
             </div>`).join("")}
         </div>
@@ -672,6 +720,7 @@ function renderStep7(){
         <div class="summary-section">
           <div class="summary-key">📚 Dimensión Enseñanza</div>
           <div class="summary-stars">${starsStr(state.dimEnsenanza.estrellas)}</div>
+          ${state.dimEnsenanza.programa?`<div style="font-size:12px;color:var(--accent);margin-top:6px;font-family:'DM Mono',monospace">Contenido: ${state.dimEnsenanza.programa}</div>`:""}
           <div class="summary-val" style="margin-top:6px;color:var(--muted)">${state.dimEnsenanza.texto||"Sin observaciones"}</div>
         </div>
       </div>
@@ -726,7 +775,7 @@ function showSuccess(){
 }
 
 function resetForm(){
-  state={step:1,docente:null,mes:null,semana:null,dimDocente:{estrellas:0,texto:""},dimAlumnos:[],dimEnsenanza:{estrellas:0,texto:""}};
+  state={step:1,docente:null,mes:null,semana:null,dimDocente:{estrellas:0,texto:""},dimAlumnos:[],dimEnsenanza:{estrellas:0,texto:"",programa:""}};
   render();
 }
 
